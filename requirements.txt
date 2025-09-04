@@ -1,0 +1,14 @@
+blinker==1.9.0
+click==8.2.1
+colorama==0.4.6
+Flask==2.3.3
+Flask-Cors==4.0.0
+Flask-MySQLdb==1.0.1
+itsdangerous==2.2.0
+Jinja2==3.1.6
+MarkupSafe==3.0.2
+mysql-connector-python==8.1.0
+mysqlclient==2.2.7
+protobuf==4.21.12
+python-dotenv==1.0.0
+Werkzeug==3.1.3
