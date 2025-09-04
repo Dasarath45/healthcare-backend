@@ -1,80 +1,99 @@
-from flask import Flask, request, jsonify
+from flask import Flask, jsonify, request
 from flask_cors import CORS
-from models import PatientModel, SensorDataModel, DeviceModel
-import json
+from database import create_connection, execute_query, fetch_all, fetch_one
+import os
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+CORS(app)
 
-# Initialize models
-patient_model = PatientModel()
-sensor_model = SensorDataModel()
-device_model = DeviceModel()
-
+# Health check endpoint
 @app.route('/')
-def home():
-    return jsonify({"message": "Healthcare Monitoring System API"})
+def health_check():
+    return jsonify({"status": "healthy", "message": "Healthcare Backend API is running"})
 
-# ESP32 endpoint for both pulse and temperature sensors
-@app.route('/api/sensor', methods=['POST'])
-def receive_sensor_data():
+# Sensor data endpoint - GET all data and POST new data
+@app.route('/api/sensor', methods=['GET', 'POST'])
+def sensor_data():
+    connection = create_connection()
+    if not connection:
+        return jsonify({"error": "Database connection failed"}), 500
+    
     try:
-        # Get data regardless of Content-Type
-        if request.content_type and 'application/json' in request.content_type:
-            data = request.get_json()
-        else:
-            # Handle form data or any other content type
-            data = {
-                'patient_id': request.form.get('patient_id', request.args.get('patient_id')),
-                'pulse_rate': request.form.get('pulse_rate', request.args.get('pulse_rate')),
-                'temperature': request.form.get('temperature', request.args.get('temperature')),
-                'device_id': request.form.get('device_id', request.args.get('device_id'))
-            }
+        if request.method == 'GET':
+            # Fetch all sensor data
+            query = "SELECT * FROM sensor_data ORDER BY timestamp DESC"
+            results = fetch_all(connection, query)
+            
+            if results is None:
+                return jsonify({"error": "Failed to fetch data"}), 500
+                
+            sensor_data = []
+            for row in results:
+                sensor_data.append({
+                    "id": row[0],
+                    "patient_id": row[1],
+                    "heart_rate": row[2],
+                    "temperature": row[3],
+                    "timestamp": row[4]
+                })
+                
+            return jsonify(sensor_data)
+            
+        elif request.method == 'POST':
+            # Insert new sensor data
+            data = request.json
+            query = """
+                INSERT INTO sensor_data (patient_id, heart_rate, temperature)
+                VALUES (%s, %s, %s)
+            """
+            values = (data['patient_id'], data['heart_rate'], data['temperature'])
+            
+            cursor = execute_query(connection, query, values)
+            if cursor and cursor.lastrowid:
+                return jsonify({
+                    "message": "Data inserted successfully",
+                    "id": cursor.lastrowid
+                }), 201
+            else:
+                return jsonify({"error": "Failed to insert data"}), 500
+                
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        if connection and connection.is_connected():
+            connection.close()
+
+# Get sensor data for a specific patient
+@app.route('/api/sensor/patient/<int:patient_id>', methods=['GET'])
+def get_patient_data(patient_id):
+    connection = create_connection()
+    if not connection:
+        return jsonify({"error": "Database connection failed"}), 500
+    
+    try:
+        query = "SELECT * FROM sensor_data WHERE patient_id = %s ORDER BY timestamp DESC"
+        results = fetch_all(connection, query, (patient_id,))
         
-        # Convert string values to appropriate types
-        patient_id = int(data.get('patient_id', 0))
-        pulse_rate = int(data.get('pulse_rate', 0))
-        device_id = data.get('device_id', 'unknown')
-        
-        # Handle temperature - convert only if provided
-        temp_value = data.get('temperature')
-        if temp_value is not None and temp_value != '':
-            temperature = float(temp_value)
-            # Validate temperature (human range: 20°C to 45°C)
-            if not (20.0 <= temperature <= 45.0):
-                return jsonify({"error": "Invalid temperature"}), 400
-        else:
-            temperature = None  # Set to NULL for database
-        
-        # Validate other data
-        if not (0 < patient_id < 1000):
-            return jsonify({"error": "Invalid patient ID"}), 400
-        
-        if not (30 <= pulse_rate <= 200):
-            return jsonify({"error": "Invalid pulse rate"}), 400
-        
-        # Store sensor data (both pulse rate and temperature)
-        sensor_id = sensor_model.create(
-            patient_id, pulse_rate, temperature, None
-        )
-        
-        # Update device status
-        if device_id != 'unknown':
-            device_model.register(device_id, patient_id)
-            device_model.update_status(device_id, 'active')
-        
-        if sensor_id:
-            return jsonify({"id": sensor_id, "message": "Sensor data received"}), 201
-        return jsonify({"error": "Failed to store data"}), 500
+        if results is None:
+            return jsonify({"error": "Failed to fetch data"}), 500
+            
+        sensor_data = []
+        for row in results:
+            sensor_data.append({
+                "id": row[0],
+                "patient_id": row[1],
+                "heart_rate": row[2],
+                "temperature": row[3],
+                "timestamp": row[4]
+            })
+            
+        return jsonify(sensor_data)
         
     except Exception as e:
-        return jsonify({"error": f"Invalid data format: {str(e)}"}), 400
-
-# Keep the old endpoint for backward compatibility
-@app.route('/api/sensor/pulse', methods=['POST'])
-def receive_pulse_data():
-    # This now redirects to the main sensor endpoint
-    return receive_sensor_data()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        if connection and connection.is_connected():
+            connection.close()
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(debug=os.environ.get('FLASK_DEBUG', False))
