@@ -1,0 +1,9 @@
+# Add these lines to your .railwayignore
+Dockerfile
+*.dc
+build.sh
+_pycache_
+*.pyc
+__pycache__/
+Dockerfile
+.dockerignore

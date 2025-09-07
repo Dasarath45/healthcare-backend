@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Health Care+</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0a2463, #1565c0, #1e88e5);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            margin-bottom: 30px;
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+        }
+
+        .logo i {
+            margin-right: 10px;
+            color: #82b1ff;
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+        }
+
+        nav ul li {
+            margin-left: 25px;
+        }
+
+        nav ul li a {
+            color: #fff;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 8px 15px;
+            border-radius: 20px;
+            transition: all 0.3s ease;
+        }
+
+        nav ul li a:hover, nav ul li a.active {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .btn {
+            background: #1976d2;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            background: #1565c0;
+            transform: translateY(-2px);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid #1976d2;
+            color: #1976d2;
+        }
+
+        .btn-outline:hover {
+            background: rgba(25, 118, 210, 0.1);
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .card h2 {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            font-size: 22px;
+        }
+
+        .card h2 i {
+            margin-right: 10px;
+            font-size: 26px;
+        }
+
+        .heart-rate-zones h2 i {
+            color: #ff5252;
+        }
+
+        .body-temperature h2 i {
+            color: #ffab40;
+        }
+
+        .blood-oxygen h2 i {
+            color: #40c4ff;
+        }
+
+        .zones {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .zone {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .zone-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .zone-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+        }
+
+        .zone-1 .zone-color { background-color: #42a5f5; }
+        .zone-2 .zone-color { background-color: #66bb6a; }
+        .zone-3 .zone-color { background-color: #ffa726; }
+        .zone-4 .zone-color { background-color: #ef5350; }
+
+        .progress-container {
+            width: 100%;
+            height: 12px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 2s ease-in-out;
+        }
+
+        .zone-1 .progress-bar { 
+            width: 25%;
+            background-color: #42a5f5;
+        }
+        .zone-2 .progress-bar { 
+            width: 50%;
+            background-color: #66bb6a;
+        }
+        .zone-3 .progress-bar { 
+            width: 75%;
+            background-color: #ffa726;
+        }
+        .zone-4 .progress-bar { 
+            width: 100%;
+            background-color: #ef5350;
+        }
+
+        .temperature-display {
+            text-align: center;
+            font-size: 52px;
+            font-weight: 700;
+            margin: 20px 0;
+            color: #ffab40;
+        }
+
+        .temperature-scale {
+            height: 20px;
+            background: linear-gradient(to right, #42a5f5, #66bb6a, #ffa726, #ef5350);
+            border-radius: 10px;
+            margin: 15px 0;
+            position: relative;
+        }
+
+        .temperature-marker {
+            position: absolute;
+            top: -5px;
+            width: 4px;
+            height: 30px;
+            background: white;
+            border-radius: 2px;
+            transform: translateX(-50%);
+            left: 36%;
+        }
+
+        .oxygen-display {
+            text-align: center;
+            font-size: 52px;
+            font-weight: 700;
+            margin: 20px 0;
+            color: #40c4ff;
+        }
+
+        .oxygen-status {
+            text-align: center;
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+
+        .oxygen-scale {
+            height: 20px;
+            background: linear-gradient(to right, #ef5350, #ffa726, #66bb6a, #42a5f5);
+            border-radius: 10px;
+            margin: 15px 0;
+            position: relative;
+        }
+
+        .oxygen-marker {
+            position: absolute;
+            top: -5px;
+            width: 4px;
+            height: 30px;
+            background: white;
+            border-radius: 2px;
+            transform: translateX(-50%);
+            left: 98%;
+        }
+
+        .health-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+        }
+
+        .info-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .info-card h3 {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            font-size: 22px;
+        }
+
+        .info-card h3 i {
+            margin-right: 10px;
+            font-size: 26px;
+        }
+
+        .sleep h3 i {
+            color: #7c4dff;
+        }
+
+        .food h3 i {
+            color: #66bb6a;
+        }
+
+        .movement h3 i {
+            color: #29b6f6;
+        }
+
+        .info-card p {
+            line-height: 1.6;
+            font-size: 16px;
+        }
+
+        /* Auth Forms */
+        .auth-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 70vh;
+        }
+
+        .auth-form {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            width: 100%;
+            max-width: 450px;
+            box-shadow: 0 8px extremely32px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .auth-form h2 {
+            text-align: center;
+            margin-bottom: 25px;
+            font-size: 28px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border-radius: 10px;
+            border: none;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            font-size: 16px;
+        }
+
+        .form-group input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .auth-form-footer {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .auth-form-footer a {
+            color: #82b1ff;
+            text-decoration: none;
+        }
+
+        /* Reports Page */
+        .reports-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .reports-filter {
+            display: flex;
+            gap: 15px;
+        }
+
+        .reports-filter select {
+            padding: 10px 15px;
+            border-radius: 10px;
+            border: none;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .report-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .report-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .report-date {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+        }
+
+        .report-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .metric {
+            text-align: center;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        .metric-value {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .metric-label {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .report-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            font-size: 14px;
+            opacity: 0.8;
+            border-top: 1px extremely solid rgba(255, 255, 255, 0.2);
+        }
+
+        .footer-content {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 10px;
+        }
+
+        .footer-links a {
+            color: #82b1ff;
+            text-decoration: none;
+        }
+
+        /* Page transitions */
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @media (max-width: 768px) {
+            nav ul {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            nav ul li {
+                margin-left: 0;
+            }
+            
+            .dashboard, .health-info {
+                grid-template-columns: 1fr;
+            }
+
+            .reports-header {
+                flex-direction: column;
+                gap: 15px;
+                align-items: flex-start;
+            }
+
+            .reports-filter {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <i class="fas fa-heartbeat"></i>
+                Smart Health Care+
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="#" class="active nav-link" data-page="dashboard">Home</a></li>
+                    <li><a href="#" class="nav-link" data-page="reports">Get Reports</a></li>
+                    <li><a href="#" class="btn btn-outline" id="logout-btn" style="display: none;">Log Out</a></li>
+                    <li><a href="#" class="btn" id="login-btn">Log In</a></li>
+                </ul>
+            </nav>
+        </header>
+
+        <main>
+            <!-- Dashboard Page -->
+            <div id="dashboard" class="page active">
+                <div class="dashboard">
+                    <div class="card heart-rate-zones">
+                        <h2><i class="fas fa-heart"></i> Heart Rate Zones</h2>
+                        <p>Heart rate zone based on the last activity</p>
+                        <div class="zones">
+                            <div class="zone zone-1">
+                                <div class="zone-label">
+                                    <div class="zone-color"></div>
+                                    <span>Bending</span>
+                                </div>
+                                <div>25%</div>
+                            </div>
+                            <div class="progress-container">
+                                <div class="progress-bar"></div>
+                            </div>
+
+                            <div class="zone zone-2">
+                                <div class="zone-label">
+                                    <div class="zone-color"></div>
+                                    <span>Moderate</span>
+                                </div>
+                                <div>50%</div>
+                            </div>
+                            <div class="progress-container">
+                                <div class="progress-bar"></div>
+                            </div>
+
+                            <div class="zone zone-3">
+                                <div class="zone-label">
+                                    <div class="zone-color"></div>
+                                    <span>Target</span>
+                                </div>
+                                <div>75%</div>
+                            </div>
+                            <div class="progress-container">
+                                <div class="progress-bar"></div>
+                            </div>
+
+                            <div class="zone zone-4">
+                                <div class="zone-label">
+                                    <div class="zone-color"></div>
+                                    <span>Peak</span>
+                                </div>
+                                <div>100%</div>
+                            </div>
+                            <div class="progress-container">
+                                <div class="progress-bar"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card body-temperature">
+                        <h2><i class="fas fa-thermometer-half"></i> Body Temperature</h2>
+                        <div class="temperature-display">36°</div>
+                        <div class="temperature-scale">
+                            <div class="temperature-marker"></div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>30°</span>
+                            <span>36°</span>
+                            <span>40°</span>
+                        </div>
+                    </div>
+
+                    <div class="card blood-oxygen">
+                        <h2><i class="fas fa-lungs"></i> Blood Oxygen</h2>
+                        <div class="oxygen-display">98%</div>
+                        <div class="oxygen-status">In good zone</div>
+                        <div class="oxygen-scale">
+                            <div class="oxygen-marker"></div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>50%</span>
+                            <span>80%</span>
+                            <span>98%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="health-info">
+                    <div class="info-card sleep">
+                        <h3><i class="fas fa-bed"></i> Healthy Sleep</h3>
+                        <p>Healthy sleep is a restorative process essential for your overall physical and mental well-being, impacting your brain function, mood, immune system, and metabolism.</p>
+                    </div>
+
+                    <div class="info-card food">
+                        <h3><i class="fas fa-utensils"></i> Healthy Food</h3>
+                        <p>Healthy food nourishes your body with necessary nutrients like vitamins, minerals, and fiber from diverse cultures such as fruits, vegetables, whole grains, and lean proteins, while limiting excessive saturated fat, sodium, and added sugars found in junk and processed foods.</p>
+                    </div>
+
+                    <div class="info-card movement">
+                        <h3><i class="fas fa-running"></i> Healthy Movement</h3>
+                        <p>Healthy movement refers to the physical activity of any kind that improves your physical, mental, and social well-being, reducing the risk of chronic conditions like heart disease, type 2 diabetes, and obesity.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reports Page -->
+            <div id="reports" class="page">
+                <div class="reports-header">
+                    <h2>Your Health Reports</h2>
+                    <div class="reports-filter">
+                        <select>
+                            <option>Last 7 days</option>
+                            <option>Last 30 days</option>
+                            <option>Last 3 months</option>
+                            <option>Last year</option>
+                        </select>
+                        <select>
+                            <option>All types</option>
+                            <option>Heart rate</option>
+                            <option>Temperature</option>
+                            <option>Oxygen</option>
+                            <option>Activity</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="report-card">
+                    <div class="report-header">
+                        <div class="report-title">Daily Health Summary</div>
+                        <div class="report-date">Today, 10:30 AM</div>
+                    </div>
+                    <div class="report-metrics">
+                        <div class="metric">
+                            <div class="metric-value">72</div>
+                            <div class="metric-label">Heart Rate</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value">36°</div>
+                            <div class="metric-label">Temperature</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value">98%</div>
+                            <div class="metric-label">Oxygen</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value">5.2km</div>
+                            <div class="metric-label">Activity</div>
+                        </div>
+                    </div>
+                    <div class="report-actions">
+                        <button class="btn">View Details</button>
+                    </div>
+                </div>
+
+                <div class="report-card">
+                    <div class="report-header">
+                        <div class="report-title">Sleep Analysis Report</div>
+                        <div class="report-date">Yesterday</div>
+                    </div>
+                    <div class="report-metrics">
+                        <div class="metric">
+                            <div class="metric-value">7h 25m</div>
+                            <div class="metric-label">Duration</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value">92%</div>
+                            <div class="metric-label">Quality</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value">4</div>
+                            <div class="metric-label">REM Cycles</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value">12</div>
+                            <div class="metric-label">Awakenings</div>
+                        </div>
+                    </div>
+                    <div class="report-actions">
+                        <button class="btn">View Details</button>
+                    </div>
+                </div>
+
+                <div class="report-card">
+                    <div class="report-header">
+                        <div class="report-title">Weekly Activity Report</div>
+                        <div class="report-date">September 15-21, 2023</div>
+                    </div>
+                    <div class="report-metrics">
+                        <div class="metric">
+                            <div class="metric-value">38.5km</div>
+                            <div class="metric-label">Distance</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value">5,230</div>
+                            <div class="metric-label">Calories</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value">12,540</div>
+                            <div class="metric-label">Steps</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value">85%</div>
+                            <div class="metric-label">Goal</div>
+                        </div>
+                    </div>
+                    <div class="report-actions">
+                        <button class="btn">View Details</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Login Page -->
+            <div id="login" class="page">
+                <div class="auth-container">
+                    <div class="auth-form">
+                        <h2><i class="fas fa-sign-in-alt"></i> Log In</h2>
+                        <div class="form-group">
+                            <label for="login-email">Email</label>
+                            <input type="email" id="login-email" placeholder="Enter your email">
+                        </div>
+                        <div class="form-group">
+                            <label for="login-password">Password</label>
+                            <input type="password" id="login-password" placeholder="Enter your password">
+                        </div>
+                        <button class="btn" style="width: 100%;" id="login-submit">Log In</button>
+                        <div class="auth-form-footer">
+                            <p>Don't have an account? <a href="#" id="show-register">Create Account</a></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Register Page -->
+            <div id="register" class="page">
+                <div class="auth-container">
+                    <div class="auth-form">
+                        <h2><i class="fas fa-user-plus"></i> Create Account</h2>
+                        <div class="form-group">
+                            <label for="register-name">Full Name</label>
+                            <input type="text" id="register-name" placeholder="Enter your full name">
+                        </div>
+                        <div class="form-group">
+                            <label for="register-email">Email</label>
+                            <input type="email" id="register-email" placeholder="Enter your email">
+                        </div>
+                        <div class="form-group">
+                            <label for="register-password">Password</label>
+                            <input type="password" id="register-password" placeholder="Create a password">
+                        </div>
+                        <div class="form-group">
+                            <label for="register-confirm">Confirm Password</label>
+                            <input type="password" id="register-confirm" placeholder="Confirm your password">
+                        </div>
+                        <button class="btn" style="width: 100%;" id="register-submit">Create Account</button>
+                        <div class="auth-form-footer">
+                            <p>Already have an account? <a href="#" id="show-login">Log In</a></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <div class="footer-content">
+                <p>© 2025 Smart Health Care | Every Signal Tells a Story</p>
+                <p>Designed by Team Pulse | Powered by from Sri Lanka</p>
+                <div class="footer-links">
+                    <a href="#">Contact Us</a>
+                    <a href="#">Privacy Policy</a>
+                    <a href="#">Terms of Service</a>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Page navigation
+            const pages = document.querySelectorAll('.page');
+            const navLinks = document.querySelectorAll('.nav-link');
+            const loginBtn = document.getElementById('login-btn');
+            const logoutBtn = document.getElementById('logout-btn');
+            const showLoginBtn = document.getElementById('show-login');
+            const showRegisterBtn = document.getElementById('show-register');
+            const loginSubmit = document.getElementById('login-submit');
+            const registerSubmit = document.getElementById('register-submit');
+
+            // Show specific page and hide others
+            function showPage(pageId) {
+                pages.forEach(page => {
+                    page.classList.remove('active');
+                });
+                document.getElementById(pageId).classList.add('active');
+            }
+
+            // Navigation link clicks
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const pageId = this.getAttribute('data-page');
+                    
+                    // Update active nav link
+                    navLinks.forEach(navLink => {
+                        navLink.classList.remove('active');
+                    });
+                    this.classList.add('active');
+                    
+                    showPage(pageId);
+                });
+            });
+
+            // Login button click
+            loginBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                showPage('login');
+                // Hide active class from nav links
+                navLinks.forEach(navLink => {
+                    navLink.classList.remove('active');
+                });
+            });
+
+            // Logout button click
+            logoutBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                // Reset UI to logged out state
+                loginBtn.style.display = 'block';
+                logoutBtn.style.display = 'none';
+                showPage('login');
+            });
+
+            // Show login form
+            showLoginBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                showPage('login');
+            });
+
+            // Show register form
+            showRegisterBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                showPage('register');
+            });
+
+            // Login form submission
+            loginSubmit.addEventListener('click', function(e) {
+                e.preventDefault();
+                // Simple validation
+                const email = document.getElementById('login-email').value;
+                const password = document.getElementById('login-password').value;
+                
+                if (email && password) {
+                    // Update UI to logged in state
+                    loginBtn.style.display = 'none';
+                    logoutBtn.style.display = 'block';
+                    showPage('dashboard');
+                    
+                    // Update active nav link
+                    navLinks.forEach(navLink => {
+                        navLink.classList.remove('active');
+                    });
+                    document.querySelector('[data-page="dashboard"]').classList.add('active');
+                } else {
+                    alert('Please enter both email and password');
+                }
+            });
+
+            // Register form submission
+            registerSubmit.addEventListener('click', function(e) {
+                e.preventDefault();
+                // Simple validation
+                const name = document.getElementById('register-name').value;
+                const email = document.getElementById('register-email').value;
+                const password = document.getElementById('register-password').value;
+                const confirm = document.getElementById('register-confirm').value;
+                
+                if (!name || !email || !password || !confirm) {
+                    alert('Please fill in all fields');
+                    return;
+                }
+                
+                if (password !== confirm) {
+                    alert('Passwords do not match');
+                    return;
+                }
+                
+                // Update UI to logged in state
+                loginBtn.style.display = 'none';
+                logoutBtn.style.display = 'block';
+                showPage('dashboard');
+                
+                // Update active nav link
+                navLinks.forEach(navLink => {
+                    navLink.classList.remove('active');
+                });
+                document.querySelector('[data-page="dashboard"]').classList.add('active');
+            });
+
+            // Animate progress bars on page load
+            setTimeout(() => {
+                const progressBars = document.querySelectorAll('.progress-bar');
+                progressBars.forEach(bar => {
+                    bar.style.width = '100%';
+                });
+            }, 500);
+        });
+    </script>
+</body>
+</html>
