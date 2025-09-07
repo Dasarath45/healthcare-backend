@@ -5,7 +5,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import datetime
 from dotenv import load_dotenv
-from config import Config  # Import config
+from config import Config
 
 # Load environment variables
 load_dotenv()
@@ -13,7 +13,7 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app)
 
-# MySQL configuration: Prefer MYSQL_URL, else config.py, else defaults
+# MySQL configuration
 mysql_url = os.getenv('MYSQL_URL')
 if mysql_url:
     parsed = urlparse(mysql_url)
@@ -26,21 +26,21 @@ if mysql_url:
     }
 else:
     MYSQL_CONFIG = {
-        'host': Config.MYSQL_HOST,
-        'user': Config.MYSQL_USER,
-        'password': Config.MYSQL_PASSWORD,
-        'database': Config.MYSQL_DB,
-        'port': Config.MYSQL_PORT
+        'host': Config.MYSQLHOST,
+        'user': Config.MYSQLUSER,
+        'password': Config.MYSQLPASSWORD,
+        'database': Config.MYSQLDATABASE,
+        'port': Config.MYSQLPORT
     }
 
 def get_mysql_connection():
     """Create and return MySQL connection"""
     try:
         conn = mysql.connector.connect(**MYSQL_CONFIG)
-        print("✅ MySQL connection successful!")
+        print(f"✅ MySQL connection successful! Config: {MYSQL_CONFIG}")
         return conn
     except mysql.connector.Error as err:
-        print(f"❌ MySQL Connection Error: {err}")
+        print(f"❌ MySQL Connection Error: {err} | Config: {MYSQL_CONFIG}")
         return None
 
 def init_database():
