@@ -12,11 +12,28 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app)
 
-# MySQL configuration - FIXED to use public URL
+# MySQL configuration - SIMPLIFIED to use public URL directly
 def get_mysql_config():
-    # Try to get from MYSQL_PUBLIC_URL first (this is the accessible one)
-    mysql_public_url = os.getenv('MYSQL_PUBLIC_URL')
+    # Try individual environment variables first (set in Railway dashboard)
+    host = os.getenv('MYSQLHOST')
+    port = os.getenv('MYSQLPORT')
+    user = os.getenv('MYSQLUSER')
+    password = os.getenv('MYSQLPASSWORD')
+    database = os.getenv('MYSQLDATABASE')
     
+    # If all individual variables are set, use them
+    if all([host, port, user, password, database]):
+        return {
+            'host': host,
+            'user': user,
+            'password': password,
+            'database': database,
+            'port': int(port),
+            'raise_on_warnings': True
+        }
+    
+    # Try MYSQL_PUBLIC_URL as fallback
+    mysql_public_url = os.getenv('MYSQL_PUBLIC_URL')
     if mysql_public_url:
         try:
             parsed = urlparse(mysql_public_url)
@@ -25,35 +42,19 @@ def get_mysql_config():
                 'user': parsed.username,
                 'password': parsed.password,
                 'database': parsed.path.lstrip('/'),
-                'port': parsed.port or 3306,
+                'port': parsed.port,
                 'raise_on_warnings': True
             }
         except Exception as e:
             print(f"Error parsing MYSQL_PUBLIC_URL: {e}")
     
-    # Try regular MYSQL_URL as fallback
-    mysql_url = os.getenv('MYSQL_URL')
-    if mysql_url:
-        try:
-            parsed = urlparse(mysql_url)
-            return {
-                'host': 'mysql.railway.internal',
-                'user': 'root',
-                'password': 'RpmwtBqkFPIrEvqbYUGifTBqvdEtdLgp',
-                'database': 'railway',
-                'port': 3306,
-                'raise_on_warnings': True
-            }
-        except Exception as e:
-            print(f"Error parsing MYSQL_URL: {e}")
-    
-    # Final fallback to individual environment variables
+    # Final fallback: Hardcode the PUBLIC connection details
     return {
-        'host': os.getenv('MYSQLHOST'),
-        'user': os.getenv('MYSQLUSER'),
-        'password': os.getenv('MYSQLPASSWORD'),
-        'database': os.getenv('MYSQLDATABASE'),
-        'port': int(os.getenv('MYSQLPORT', '3306')),
+        'host': 'trolley.proxy.rlwy.net',
+        'user': 'root',
+        'password': 'RpmwtBqKfPIrEvqbYUGifTBqvdEtdLgp',
+        'database': 'railway',
+        'port': 35987,
         'raise_on_warnings': True
     }
 
@@ -209,8 +210,91 @@ def debug_db():
     except Exception as e:
         return jsonify({"error": str(e), "config": {k: v for k, v in MYSQL_CONFIG.items() if k != 'password'}}), 500
 
-# Keep all your existing API endpoints below...
-# [Your existing /api/health-data, /api/patients endpoints here]
+@app.route('/api/health-data', methods=['POST'])
+def receive_health_data():
+    try:
+        data = request.get_json()
+        print(f"📦 Received data: {data}")
+        
+        if not data:
+            return jsonify({"error": "No data received"}), 400
+        
+        heart_rate = data.get('heart_rate')
+        temperature = data.get('temperature')
+        spo2 = data.get('spo2')
+        patient_id = data.get('patient_id', 1)
+        
+        if None in [heart_rate, temperature, spo2]:
+            return jsonify({"error": "Missing data fields"}), 400
+        
+        query = """
+        INSERT INTO health_data (patient_id, heart_rate, temperature, spo2)
+        VALUES (%s, %s, %s, %s)
+        """
+        result = execute_query(query, (patient_id, heart_rate, temperature, spo2))
+        
+        if result:
+            return jsonify({
+                "message": "✅ Data saved successfully!",
+                "data": {
+                    "heart_rate": heart_rate,
+                    "temperature": temperature,
+                    "spo2": spo2,
+                    "timestamp": datetime.datetime.now().isoformat()
+                }
+            }), 200
+        else:
+            return jsonify({"error": "Database insertion failed"}), 500
+            
+    except Exception as e:
+        print(f"❌ Error: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/health-data', methods=['GET'])
+def get_health_data():
+    try:
+        query = "SELECT * FROM health_data ORDER BY timestamp DESC LIMIT 50"
+        rows = fetch_all(query)
+        
+        health_data = []
+        for row in rows:
+            health_data.append({
+                "id": row['id'],
+                "patient_id": row['patient_id'],
+                "heart_rate": row['heart_rate'],
+                "temperature": row['temperature'],
+                "spo2": row['spo2'],
+                "timestamp": row['timestamp'].isoformat() if row['timestamp'] else None
+            })
+        
+        return jsonify({"health_data": health_data}), 200
+            
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/patients', methods=['POST'])
+def create_patient():
+    try:
+        data = request.get_json()
+        name = data.get('name')
+        age = data.get('age')
+        
+        if not name:
+            return jsonify({"error": "Name is required"}), 400
+        
+        query = "INSERT INTO patients (name, age) VALUES (%s, %s)"
+        patient_id = execute_query(query, (name, age))
+        
+        if patient_id:
+            return jsonify({
+                "message": "Patient created successfully",
+                "patient_id": patient_id
+            }), 201
+        else:
+            return jsonify({"error": "Database insertion failed"}), 500
+            
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     print("🚀 Starting Healthcare API Server...")
