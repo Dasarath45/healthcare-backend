@@ -226,7 +226,7 @@ def get_health_data():
                 "id": row['id'],
                 "patient_id": row['patient_id'],
                 "heart_rate": row['heart_rate'],
-                "temperature': row['temperature'],
+                "temperature": row['temperature'],
                 "spo2": row['spo2'],
                 "timestamp": row['timestamp'].isoformat() if row['timestamp'] else None
             })
