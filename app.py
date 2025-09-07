@@ -1,6 +1,5 @@
 import os
 import mysql.connector
-from urllib.parse import urlparse
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import datetime
@@ -12,49 +11,14 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app)
 
-# MySQL configuration - SIMPLIFIED to use public URL directly
+# SIMPLIFIED MySQL configuration - directly use environment variables
 def get_mysql_config():
-    # Try individual environment variables first (set in Railway dashboard)
-    host = os.getenv('MYSQLHOST')
-    port = os.getenv('MYSQLPORT')
-    user = os.getenv('MYSQLUSER')
-    password = os.getenv('MYSQLPASSWORD')
-    database = os.getenv('MYSQLDATABASE')
-    
-    # If all individual variables are set, use them
-    if all([host, port, user, password, database]):
-        return {
-            'host': host,
-            'user': user,
-            'password': password,
-            'database': database,
-            'port': int(port),
-            'raise_on_warnings': True
-        }
-    
-    # Try MYSQL_PUBLIC_URL as fallback
-    mysql_public_url = os.getenv('MYSQL_PUBLIC_URL')
-    if mysql_public_url:
-        try:
-            parsed = urlparse(mysql_public_url)
-            return {
-                'host': parsed.hostname,
-                'user': parsed.username,
-                'password': parsed.password,
-                'database': parsed.path.lstrip('/'),
-                'port': parsed.port,
-                'raise_on_warnings': True
-            }
-        except Exception as e:
-            print(f"Error parsing MYSQL_PUBLIC_URL: {e}")
-    
-    # Final fallback: Hardcode the PUBLIC connection details
     return {
-        'host': 'trolley.proxy.rlwy.net',
-        'user': 'root',
-        'password': 'RpmwtBqKfPIrEvqbYUGifTBqvdEtdLgp',
-        'database': 'railway',
-        'port': 35987,
+        'host': os.getenv('MYSQLHOST'),
+        'user': os.getenv('MYSQLUSER'),
+        'password': os.getenv('MYSQLPASSWORD'),
+        'database': os.getenv('MYSQLDATABASE'),
+        'port': int(os.getenv('MYSQLPORT')),
         'raise_on_warnings': True
     }
 
@@ -262,7 +226,7 @@ def get_health_data():
                 "id": row['id'],
                 "patient_id": row['patient_id'],
                 "heart_rate": row['heart_rate'],
-                "temperature": row['temperature'],
+                "temperature': row['temperature'],
                 "spo2": row['spo2'],
                 "timestamp": row['timestamp'].isoformat() if row['timestamp'] else None
             })
