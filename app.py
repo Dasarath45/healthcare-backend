@@ -37,11 +37,11 @@ def get_mysql_config():
         try:
             parsed = urlparse(mysql_url)
             return {
-                'host': parsed.hostname,
-                'user': parsed.username,
-                'password': parsed.password,
-                'database': parsed.path.lstrip('/'),
-                'port': parsed.port or 3306,
+                'host': 'mysql.railway.internal',
+                'user': 'root',
+                'password': 'RpmwtBqkFPIrEvqbYUGifTBqvdEtdLgp',
+                'database': 'railway',
+                'port': 3306,
                 'raise_on_warnings': True
             }
         except Exception as e:
